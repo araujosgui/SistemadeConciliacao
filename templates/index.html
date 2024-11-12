@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Processo de Conciliação - Banco</title>
+    <style>
+       body {
+            background-image: url("{{ url_for('static', filename='Background - FictorConsig.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column; /* Alinha o conteúdo em coluna */
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Evita rolagem se a altura da tela for maior que 100vh */
+            box-sizing: border-box; /* Garante que o padding não afete o tamanho total */
+}
+
+
+        .main-content {
+            max-width: 900px;
+            width: 100%;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .form-card {
+            background-color: #ffffffd5;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #000000;
+        }
+
+        .btn-primary {
+            background-color: #047861;
+            border: none;
+            transition: background-color 0.3s, transform 0.2s;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            background-color: #064719a5;
+            transform: translateY(-3px);
+        }
+
+        .btn-clear {
+            background-color: #eb6464d4;
+            border: none;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-clear:hover {
+            background-color: #e16161b0;
+            transform: translateY(-3px);
+        }
+
+        .drag-drop-box {
+            border: 2px dashed #000000;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            min-height: 100px;
+            margin-bottom: 10px;
+        }
+
+        .drag-drop-box:hover {
+            background-color: #f1f1f1;
+        }
+
+        .file-list {
+            margin-top: 10px;
+            list-style: none;
+            padding-left: 0;
+            text-align: left;
+            width: 100%;
+        }
+
+        .file-list li {
+            background-color: #eef2f3;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+
+        .file-list li .file-name {
+            color: #333;
+        }
+
+        .file-list li .file-size {
+            color: #666;
+        }
+
+        .file-list li .remove-file {
+            color: #ff4d4d;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .form-card {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-content">
+        <div class="form-card">
+            <form id="fileFormFIDC" action="/" method="post" enctype="multipart/form-data">
+                <h3 style="text-align: center;">Importações dos Arquivos</h3>
+                <div class="mb-3">
+                    <label for="file1_fidc" class="form-label">Retorno:</label>
+                    <div class="drag-drop-box" id="file1DropBox">
+                        Arraste e solte o arquivo ou clique para selecionar
+                        <input type="file" class="form-control" name="file1_fidc" id="file1_fidc" accept=".xlsx" style="display:none;">
+                        <ul class="file-list" id="file1List"></ul>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="file2_fidc" class="form-label">Estoque:</label>
+                    <div class="drag-drop-box" id="file2DropBox">
+                        Arraste e solte o arquivo ou clique para selecionar
+                        <input type="file" class="form-control" name="file2_fidc" id="file2_fidc" accept=".xlsx" style="display:none;">
+                        <ul class="file-list" id="file2List"></ul>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Processar Arquivos</button>
+                <button type="button" class="btn btn-clear" onclick="clearFields('fileFormFIDC')">Limpar Campos</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts para Feedback Visual e Interações -->
+    <script>
+        function clearFields(formId) {
+            const form = document.getElementById(formId);
+            form.querySelectorAll('input[type="file"]').forEach(input => input.value = "");
+            form.querySelectorAll('.file-list').forEach(list => list.innerHTML = "");
+        }
+
+        function setupDragAndDrop(inputElement, dropBox, fileListElement) {
+            dropBox.addEventListener('click', function () {
+                inputElement.click();
+            });
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropBox.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            dropBox.addEventListener('dragenter', () => dropBox.classList.add('highlight'));
+            dropBox.addEventListener('dragleave', () => dropBox.classList.remove('highlight'));
+            dropBox.addEventListener('dragover', () => dropBox.classList.add('highlight'));
+            dropBox.addEventListener('drop', (e) => {
+                dropBox.classList.remove('highlight');
+                const files = e.dataTransfer.files;
+                inputElement.files = files;
+                updateFileList(files, fileListElement);
+            });
+
+            inputElement.addEventListener('change', function () {
+                updateFileList(inputElement.files, fileListElement);
+            });
+        }
+
+        function updateFileList(files, fileListElement) {
+            fileListElement.innerHTML = "";
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `<span class="file-name">${file.name}</span> <span class="file-size">${(file.size / 1024).toFixed(2)} KB</span>`;
+                fileListElement.appendChild(listItem);
+            }
+        }
+
+        setupDragAndDrop(document.getElementById('file1_fidc'), document.getElementById('file1DropBox'), document.getElementById('file1List'));
+        setupDragAndDrop(document.getElementById('file2_fidc'), document.getElementById('file2DropBox'), document.getElementById('file2List'));
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
+</body>
+
+</html>
+
